@@ -1,0 +1,13 @@
+{
+    "model": "runs/detect/yolov8n_test/weights/last.pt",
+    "source": "my_test",
+    "save": true,
+    "iou": 0.3,
+    "save_txt": true,
+    "save_conf": true,
+    "conf": 0.5,
+    "project": "my_test_output",
+    "name": "detection_results",
+    "exist_ok": true
+  }
+  
