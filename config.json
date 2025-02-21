@@ -1,13 +1,16 @@
 {
-    "model": "runs/detect/yolov8n_test/weights/last.pt",
-    "source": "my_test",
-    "save": true,
-    "iou": 0.3,
-    "save_txt": true,
+    "model"    : "runs/detect/yolov8n_test/weights/last.pt",
+    "source"   : "dist/my_test",
+    "save"     : true,
+    "iou"      : 0.3,
+    "save_txt" : true,
     "save_conf": true,
-    "conf": 0.5,
-    "project": "my_test_output",
-    "name": "detection_results",
-    "exist_ok": true
+    "conf"     : 0.5,
+    "project"  : "my_test_output_wd",
+    "name"     : "detection_results",
+    "exist_ok" : true,
+    "verbose"  : false,
+
+    "sleep"    : 0
   }
   
