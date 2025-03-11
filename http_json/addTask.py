@@ -14,9 +14,9 @@ map_dict = {'10000016': 'B003',
 devicePos = 10000016
 taskpath = '10000015,10000014,10000027,10000017,10000018,10000019,10000029,10000016'
 
-addTask_ip_address = 'http://192.168.10.50:7000/ics/taskOrder/addTask'
-deviceInfo_ip_address = 'http://192.168.10.50:7000/ics/out/device/list/deviceInfo'
-controlDevice_ip_address = 'http://192.168.10.50:7000/ics/out/controlDevice'
+addTask_ip_address = 'http://IP:7000/ics/taskOrder/addTask'
+deviceInfo_ip_address = 'http://IP:7000/ics/out/device/list/deviceInfo'
+controlDevice_ip_address = 'http://IP:7000/ics/out/controlDevice'
 
 orderId = '83'
 pause_time = 3
