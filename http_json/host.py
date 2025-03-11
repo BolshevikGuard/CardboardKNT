@@ -1,6 +1,6 @@
 import socket
 
-SERVER_IP = '192.168.3.38'  # 服务器端电脑 B 的 IP 地址
+SERVER_IP = 'IP'  # 服务器端电脑 B 的 IP 地址
 PORT = 12345  # 端口号，与服务器端保持一致
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
