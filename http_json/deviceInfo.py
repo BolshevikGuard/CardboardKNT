@@ -2,7 +2,7 @@ import requests
 import json
 
 # AGV设备的IP地址
-ip_address = 'http://192.168.10.50:7000/ics/out/device/list/deviceInfo'
+ip_address = 'http://IP:7000/ics/out/device/list/deviceInfo'
 
 # 请求头，指定Content-Type为application/json
 headers = {'Content-Type': 'application/json'}
