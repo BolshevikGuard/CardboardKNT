@@ -9,6 +9,8 @@ import socket
 HOST = '0.0.0.0'  # 监听所有网络接口
 PORT = 12345  # 端口号，可自定义
 
+server_mode = False
+
 def To_hex_str(num):
     chaDic = {10: 'a', 11: 'b', 12: 'c', 13: 'd', 14: 'e', 15: 'f'}
     hexStr = ""
@@ -102,12 +104,6 @@ if __name__ == "__main__":
                 strSerialNumber = strSerialNumber + chr(per)
             print (f"user serial number: {strSerialNumber}")
 
-    # nConnectionNum = input("please input the number of the device to connect: ")
-
-    # if int(nConnectionNum) >= deviceList.nDeviceNum:
-    #     print ("intput error!")
-    #     sys.exit()
-
     # ch:创建相机实例 | en:Creat Camera Object
     obj_cam = []
     for i in range(0, deviceList.nDeviceNum):
@@ -163,24 +159,38 @@ if __name__ == "__main__":
 
     pic_cnt = 0
     
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-        server_socket.bind((HOST, PORT))
-        server_socket.listen(1)
-        print('server activated, waiting for client...')
-        conn, addr = server_socket.accept()
-        with conn:
-            print(f'client connected: {addr}')
-            while True:
-                data = conn.recv(1024).decode()
-                if not data:
-                    break
-                elif data.strip().lower() == 's':
-                    get_one_pic(obj_cam, pic_cnt, deviceList.nDeviceNum)
-                    pic_cnt += 1
-                elif data.strip().lower() == 'e':
-                    print('exit!')
-                    break
-                else: print('invalid order!')
+    # 拍摄一轮图像
+    if server_mode:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+            server_socket.bind((HOST, PORT))
+            server_socket.listen(1)
+            print('server activated, waiting for client...')
+            conn, addr = server_socket.accept()
+            with conn:
+                print(f'client connected: {addr}')
+                while True:
+                    data = conn.recv(1024).decode()
+                    if not data:
+                        break
+                    elif data.strip().lower() == 's':
+                        get_one_pic(obj_cam, pic_cnt, deviceList.nDeviceNum)
+                        pic_cnt += 1
+                    elif data.strip().lower() == 'e':
+                        print('exit!')
+                        break
+                    else: print('invalid order!')
+    else:
+        while True:
+            print('[s] save one round / [esc] quit')
+            key = msvcrt.getch().decode('utf-8')
+            if key == 's':
+                get_one_pic(obj_cam, pic_cnt, deviceList.nDeviceNum)
+                pic_cnt += 1
+            elif key == '\x1b':
+                print('exit!')
+                break
+            else:
+                print("press again")
 
     # ch:停止取流 | en:Stop grab image
     for i in range(0, deviceList.nDeviceNum):
