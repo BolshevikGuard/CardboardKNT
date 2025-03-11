@@ -179,6 +179,7 @@ if __name__ == "__main__":
                         print('exit!')
                         break
                     else: print('invalid order!')
+            conn.close()
     else:
         while True:
             print('[s] save one round / [esc] quit')
