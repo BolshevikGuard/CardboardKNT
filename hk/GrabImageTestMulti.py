@@ -4,7 +4,22 @@ import sys
 import msvcrt
 from ctypes import *
 from MvCameraControl_class import *
+import socket
 
+HOST = '0.0.0.0'  # 监听所有网络接口
+PORT = 12345  # 端口号，可自定义
+
+def To_hex_str(num):
+    chaDic = {10: 'a', 11: 'b', 12: 'c', 13: 'd', 14: 'e', 15: 'f'}
+    hexStr = ""
+    if num < 0:
+        num = num + 2**32
+    while num >= 16:
+        digit = num % 16
+        hexStr = chaDic.get(digit, str(digit)) + hexStr
+        num //= 16
+    hexStr = chaDic.get(num, str(num)) + hexStr   
+    return hexStr
 
 def get_one_pic(obj_cam, pic_cnt, DeviceNum):
     for i in range(0, DeviceNum):
@@ -27,14 +42,14 @@ def get_one_pic(obj_cam, pic_cnt, DeviceNum):
             stParam.iMethodValue = 0
             nRet = cam.MV_CC_SaveImageToFile(stParam)
             if nRet != 0:
-                print(f'save failed[0x{nRet}]')
+                print(f'save failed[0x{To_hex_str(nRet)}]')
             else:
-                print(f'cam{i} img{pic_cnt} saved')
+                print(f'cam_{i} img{pic_cnt} saved')
             
             nRet = cam.MV_CC_FreeImageBuffer(stOutFrame)
 
         else:
-            print (f"no data[0x{ret}]")
+            print (f"no data[0x{To_hex_str(ret)}]")
 
 if __name__ == "__main__":
 
@@ -45,7 +60,7 @@ if __name__ == "__main__":
     # ch:枚举设备 | en:Enum device
     ret = MvCamera.MV_CC_EnumDevices(tlayerType, deviceList)
     if ret != 0:
-        print (f"enum devices fail! ret[0x{ret}]")
+        print (f"enum devices fail! ret[0x{To_hex_str(ret)}]")
         sys.exit()
 
     if deviceList.nDeviceNum == 0:
@@ -102,7 +117,7 @@ if __name__ == "__main__":
         ret = cam.MV_CC_CreateHandle(stDeviceList)
         obj_cam.append(cam)
         if ret != 0:
-            print (f"create handle fail! ret[0x{ret}]")
+            print (f"create handle fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
 
     # ch:打开设备 | en:Open device
@@ -110,7 +125,7 @@ if __name__ == "__main__":
         cam = obj_cam[i]
         ret = cam.MV_CC_OpenDevice(MV_ACCESS_Exclusive, 0)
         if ret != 0:
-            print (f"open device fail! ret[0x{ret}]")
+            print (f"open device fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
         print(f'Device {i} opened')
     
@@ -122,20 +137,20 @@ if __name__ == "__main__":
             if int(nPacketSize) > 0:
                 ret = cam.MV_CC_SetIntValue("GevSCPSPacketSize",nPacketSize)
                 if ret != 0:
-                    print (f"Warning: Set Packet Size fail! ret[0x{ret}]")
+                    print (f"Warning: Set Packet Size fail! ret[0x{To_hex_str(ret)}]")
             else:
-                print (f"Warning: Get Packet Size fail! ret[0x{nPacketSize}]")
+                print (f"Warning: Get Packet Size fail! ret[0x{To_hex_str(nPacketSize)}]")
         stBool = c_bool(False)
         ret = cam.MV_CC_GetBoolValue("AcquisitionFrameRateEnable", stBool)
         if ret != 0:
-            print (f"get AcquisitionFrameRateEnable fail! ret[0x{ret}]")
+            print (f"get AcquisitionFrameRateEnable fail! ret[0x{To_hex_str(ret)}]")
 
     # ch:设置触发模式为off | en:Set trigger mode as off
     for i in range(0, deviceList.nDeviceNum):
         cam = obj_cam[i]
         ret = cam.MV_CC_SetEnumValue("TriggerMode", MV_TRIGGER_MODE_OFF)
         if ret != 0:
-            print (f"set trigger mode fail! ret[0x{ret}]")
+            print (f"set trigger mode fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
 
     # ch:开始取流 | en:Start grab image
@@ -143,29 +158,36 @@ if __name__ == "__main__":
         cam = obj_cam[i]
         ret = cam.MV_CC_StartGrabbing()
         if ret != 0:
-            print (f"start grabbing fail! ret[0x{ret}]")
+            print (f"start grabbing fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
 
     pic_cnt = 0
     
-    while True:
-        print('[s] save one round / [esc] quit')
-        key = msvcrt.getch().decode('utf-8')
-        if key == 's':
-            get_one_pic(obj_cam, pic_cnt, deviceList.nDeviceNum)
-            pic_cnt += 1
-        elif key == '\x1b':
-            print('exit!')
-            break
-        else:
-            print("press again")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.bind((HOST, PORT))
+        server_socket.listen(1)
+        print('server activated, waiting for client...')
+        conn, addr = server_socket.accept()
+        with conn:
+            print(f'client connected: {addr}')
+            while True:
+                data = conn.recv(1024).decode()
+                if not data:
+                    break
+                elif data.strip().lower() == 's':
+                    get_one_pic(obj_cam, pic_cnt, deviceList.nDeviceNum)
+                    pic_cnt += 1
+                elif data.strip().lower() == 'e':
+                    print('exit!')
+                    break
+                else: print('invalid order!')
 
     # ch:停止取流 | en:Stop grab image
     for i in range(0, deviceList.nDeviceNum):
         cam = obj_cam[i]
         ret = cam.MV_CC_StopGrabbing()
         if ret != 0:
-            print (f"stop grabbing fail! ret[0x{ret}]")
+            print (f"stop grabbing fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
 
     # ch:关闭设备 | Close device
@@ -173,7 +195,7 @@ if __name__ == "__main__":
         cam = obj_cam[i]
         ret = cam.MV_CC_CloseDevice()
         if ret != 0:
-            print (f"close deivce fail! ret[0x{ret}]")
+            print (f"close deivce fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
 
     # ch:销毁句柄 | Destroy handle
@@ -181,5 +203,5 @@ if __name__ == "__main__":
         cam = obj_cam[i]
         ret = cam.MV_CC_DestroyHandle()
         if ret != 0:
-            print (f"destroy handle fail! ret[0x{ret}]")
+            print (f"destroy handle fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
