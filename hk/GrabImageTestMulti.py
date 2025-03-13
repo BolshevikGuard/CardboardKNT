@@ -33,14 +33,14 @@ def get_one_pic(obj_cam, pic_cnt, DeviceNum):
 
             print (f"get one frame: Width[{stOutFrame.stFrameInfo.nWidth}], Height[{stOutFrame.stFrameInfo.nHeight}], picNum[{pic_cnt}]")
 
-            stParam = MV_SAVE_IMG_TO_FILE_PARAM()
-            stParam.enPixelType = stOutFrame.stFrameInfo.enPixelType
-            stParam.pData = stOutFrame.pBufAddr
-            stParam.nDataLen = stOutFrame.stFrameInfo.nFrameLen
-            stParam.nWidth = stOutFrame.stFrameInfo.nWidth
-            stParam.nHeight = stOutFrame.stFrameInfo.nHeight
-            stParam.enImageType = MV_Image_Bmp
-            stParam.pImagePath = f'savetest/cam{i}_{pic_cnt}.bmp'.encode('utf-8')
+            stParam              = MV_SAVE_IMG_TO_FILE_PARAM()
+            stParam.enPixelType  = stOutFrame.stFrameInfo.enPixelType
+            stParam.pData        = stOutFrame.pBufAddr
+            stParam.nDataLen     = stOutFrame.stFrameInfo.nFrameLen
+            stParam.nWidth       = stOutFrame.stFrameInfo.nWidth
+            stParam.nHeight      = stOutFrame.stFrameInfo.nHeight
+            stParam.enImageType  = MV_Image_Bmp
+            stParam.pImagePath   = f'savetest/cam{i}_{pic_cnt}.bmp'.encode('utf-8')
             stParam.iMethodValue = 0
             nRet = cam.MV_CC_SaveImageToFile(stParam)
             if nRet != 0:
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     deviceList = MV_CC_DEVICE_INFO_LIST()
     tlayerType = MV_GIGE_DEVICE | MV_USB_DEVICE
-    obj_cam = 0
+    obj_cam    = 0
     
     # ch:枚举设备 | en:Enum device
     ret = MvCamera.MV_CC_EnumDevices(tlayerType, deviceList)
@@ -110,11 +110,11 @@ if __name__ == "__main__":
         cam = MvCamera()
         # ch:选择设备并创建句柄 | en:Select device and create handle
         stDeviceList = cast(deviceList.pDeviceInfo[int(i)], POINTER(MV_CC_DEVICE_INFO)).contents
-        ret = cam.MV_CC_CreateHandle(stDeviceList)
-        obj_cam.append(cam)
+        ret = cam.MV_CC_CreateHandle(stDeviceList)        
         if ret != 0:
             print (f"create handle fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
+        obj_cam.append(cam)
 
     # ch:打开设备 | en:Open device
     for i in range(0, deviceList.nDeviceNum):
@@ -156,6 +156,9 @@ if __name__ == "__main__":
         if ret != 0:
             print (f"start grabbing fail! ret[0x{To_hex_str(ret)}]")
             sys.exit()
+        ret = cam.MV_CC_SetEnumValue('ExposureAuto', MV_EXPOSURE_AUTO_MODE_CONTINUOUS)
+        if ret != 0:
+            print(f'set exposure auto fail! ret[0x{To_hex_str(ret)}]')
 
     pic_cnt = 0
     
@@ -169,7 +172,7 @@ if __name__ == "__main__":
             with conn:
                 print(f'client connected: {addr}')
                 while True:
-                    data = conn.recv(1024).decode()
+                    data = conn.recv(1024).decode(encoding='utf-8')
                     if not data:
                         break
                     elif data.strip().lower() == 's':
