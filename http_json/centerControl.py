@@ -14,11 +14,11 @@ map_dict = {'10000016': 'B003',
             '10000029': 'D001'}
 devicePos = 10000016
 taskpath = '10000015,10000014,10000027,10000017,10000018,10000019,10000029,10000016'
-IP = ''
+AGV_IP = ''
 
-addTask_ip_address = f'http://{IP}:7000/ics/taskOrder/addTask'
-deviceInfo_ip_address = f'http://{IP}:7000/ics/out/device/list/deviceInfo'
-controlDevice_ip_address = f'http://{IP}:7000/ics/out/controlDevice'
+addTask_ip_address = f'http://{AGV_IP}:7000/ics/taskOrder/addTask'
+deviceInfo_ip_address = f'http://{AGV_IP}:7000/ics/out/device/list/deviceInfo'
+controlDevice_ip_address = f'http://{AGV_IP}:7000/ics/out/controlDevice'
 
 orderId = '83'
 pause_time = 2
@@ -64,9 +64,9 @@ act_data = {
 # 连接工控机服务端
 SERVER_IP = ''
 PORT = 12345
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-    client_socket.connect((SERVER_IP, PORT))
-    print('server connected!')
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM):
+client_socket.connect((SERVER_IP, PORT))
+print('server connected!')
 
 task_response = requests.post(addTask_ip_address, headers=headers, data=json.dumps(task_data))
 
