@@ -6,6 +6,7 @@ import socket
 class CenterControl():
     def __init__(self):
         self.client_socket = None
+        self.running = False
 
     def run(self):
         print('hello from center control')
@@ -14,6 +15,7 @@ class CenterControl():
             config = json.load(f)
         map_dict           = config['map_dict']
         devicePos          = config['devicePos']
+        startPos           = devicePos
         taskpath           = config['taskpath']
         AGV_IP             = config['AGV_IP']
         config['orderId'] += 1
@@ -27,7 +29,7 @@ class CenterControl():
         deviceInfo_ip_address = f'http://{AGV_IP}:7000/ics/out/device/list/deviceInfo'
         controlDevice_ip_address = f'http://{AGV_IP}:7000/ics/out/controlDevice'
 
-        pause_time = 3
+        pause_time = 1
 
         # 请求头，指定Content-Type为application/json
         headers = {'Content-Type': 'application/json'}
@@ -83,7 +85,7 @@ class CenterControl():
             if task_response_data['code'] == 1000:
                 print("请求成功")
                 
-                while(True):
+                while self.running:
                     # 发送POST请求
                     info_response = requests.post(deviceInfo_ip_address, headers=headers, data=json.dumps(info_data))
 
@@ -98,7 +100,6 @@ class CenterControl():
                             
                             # 到达各个预设点位
                             if task_info['devicePosition'] != devicePos and str(task_info['devicePosition']) in map_dict.keys():
-
                                 # 回报位置并暂停若干秒 拍摄照片
                                 devicePos = task_info['devicePosition']
                                 print(f'reach position {devicePos} aka {map_dict[str(devicePos)]}')
@@ -118,6 +119,7 @@ class CenterControl():
             print(f"{task_response.status_code} {task_response.text}")
     
     def stop(self):
+        self.running = False
         if self.client_socket:
             try:
                 self.client_socket.sendall(b'e')

@@ -1,5 +1,5 @@
 import sys
-import centerControl
+from centerControl import CenterControl
 import pred_test
 import qrtest
 import layer_cnt
@@ -20,21 +20,20 @@ class QTextEditLogger:
 
 # 创建一个线程类来运行 centerControl
 class CenterControlThread(QThread):
-
-    def __init__(self):
+    def __init__(self, center_control):
         super().__init__()
-        self.controller = centerControl.CenterControl()
+        self.controller = center_control
 
     def run(self):
         try:
             self.controller.run()
-            print('cuise done')
+            print('Cuise Done!')
         except Exception as e:
             print(f"Cruise Error: {str(e)}")
     
-    def stop(self):
-        self.controller.stop()
-        print('Cruise Finished!')
+    # def stop(self):
+    #     self.controller.stop()
+    #     print('Cruise Finished!')
 
 # GUI 界面
 class MainWindow(QWidget):
@@ -42,6 +41,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("智能仓储盘点系统")
         self.init()
+        self.center_control = CenterControl()
         self.setGeometry(100, 100, 1000, 600)
 
     def init(self):
@@ -51,23 +51,23 @@ class MainWindow(QWidget):
         rightlayout = QVBoxLayout()
 
         # 左侧布局 包括AGV启动按钮、AGV结束按钮、读图与推理按钮
-        self.start_button = QPushButton("Activate\nCenter Control", self)
+        self.start_button = QPushButton("启动AGV巡航", self)
         self.start_button.clicked.connect(self.start_center_control)
         self.start_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         leftlayout.addWidget(self.start_button)
 
-        self.stop_button = QPushButton("Stop\nCenter Control", self)
+        self.stop_button = QPushButton("结束AGV巡航", self)
         self.stop_button.clicked.connect(self.stop_center_control)
         self.stop_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         leftlayout.addWidget(self.stop_button)
 
-        self.pred_button = QPushButton("Read Imgs\n&&\nPredict", self)
+        self.pred_button = QPushButton("读取图片\n&&\n推理", self)
         self.pred_button.clicked.connect(self.read_pred)
         self.pred_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         leftlayout.addWidget(self.pred_button)
 
         # 中部布局 包括QR识读与计数按钮、计数结果输出框
-        self.QRcnt_button = QPushButton("Scan QR\n&&\nCount Boxes", self)
+        self.QRcnt_button = QPushButton("扫描条码\n&&\n箱体计数", self)
         self.QRcnt_button.clicked.connect(self.qr_count)
         self.QRcnt_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         midlayout.addWidget(self.QRcnt_button)
@@ -91,19 +91,24 @@ class MainWindow(QWidget):
         layout.addLayout(rightlayout)
         self.setLayout(layout)
 
-        self.worker_thread = None
+        # self.worker_thread = None
         sys.stdout = QTextEditLogger(self.log_output)
 
     # 启动AGV
     def start_center_control(self):
-        if not self.worker_thread or not self.worker_thread.isRunning():
-            self.worker_thread = CenterControlThread()
-            self.worker_thread.run()
+        if self.center_control.running:
+            return
+        self.center_control.running = True
+        self.center_control_thread = CenterControlThread(self.center_control)
+        self.center_control_thread.start()
 
     # 停止AGV
     def stop_center_control(self):
-        if self.worker_thread:
-            self.worker_thread.stop()
+        self.center_control.stop()
+        if self.center_control_thread:
+            self.center_control_thread.quit()
+            self.center_control_thread.wait()
+        print('Cruise Finished!')
 
     # 读图与推理
     def read_pred(self):
