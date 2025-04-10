@@ -1,8 +1,9 @@
 import sys
 from centerControl import CenterControl
 import pred_test
-import qrtest
+import qr_scan
 import layer_cnt
+import depth_sim
 from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QTextEdit, QHBoxLayout, QSizePolicy
 from PySide6.QtCore import QThread
 from PySide6.QtGui import QFont
@@ -31,9 +32,33 @@ class CenterControlThread(QThread):
         except Exception as e:
             print(f"Cruise Error: {str(e)}")
     
-    # def stop(self):
-    #     self.controller.stop()
-    #     print('Cruise Finished!')
+class PredictThread(QThread):
+    def __init__(self, pred_test):
+        super().__init__()
+        self.predictor = pred_test
+    def run(self):
+        self.predictor.run()
+
+class DepthSimThread(QThread):
+    def __init__(self, depth_sim):
+        super().__init__()
+        self.depthsimer = depth_sim
+    def run(self):
+        self.depthsimer.run()
+
+class QrScanThread(QThread):
+    def __init__(self, qr_scan):
+        super().__init__()
+        self.qrscanner = qr_scan
+    def run(self):
+        self.qrscanner.run()
+
+class LayerCntThread(QThread):
+    def __init__(self, layer_cnt):
+        super().__init__()
+        self.layercnter = layer_cnt
+    def run(self):
+        self.layercnter.run()
 
 # GUI 界面
 class MainWindow(QWidget):
@@ -42,6 +67,10 @@ class MainWindow(QWidget):
         self.setWindowTitle("智能仓储盘点系统")
         self.init()
         self.center_control = CenterControl()
+        self.pred_test = pred_test.PredictTest()
+        self.depth_sim = depth_sim.DepthSim()
+        self.qr_read = qr_scan.QrScan()
+        self.layer_cnt = layer_cnt.LayerCnt()
         self.setGeometry(100, 100, 1000, 600)
 
     def init(self):
@@ -68,7 +97,7 @@ class MainWindow(QWidget):
 
         # 中部布局 包括QR识读与计数按钮、计数结果输出框
         self.QRcnt_button = QPushButton("扫描条码\n&&\n箱体计数", self)
-        self.QRcnt_button.clicked.connect(self.qr_count)
+        self.QRcnt_button.clicked.connect(self.qr_scan)
         self.QRcnt_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         midlayout.addWidget(self.QRcnt_button)
 
@@ -112,16 +141,21 @@ class MainWindow(QWidget):
 
     # 读图与推理
     def read_pred(self):
-        pred = pred_test.PredictTest()
-        pred.run()
+        self.pred_test_thread = PredictThread(self.pred_test)
+        self.pred_test_thread.start()
+        self.pred_test_thread.wait()
+        self.depth_sim_thread = DepthSimThread(self.depth_sim)
+        self.depth_sim_thread.start()
         
     # 读码与计数
-    def qr_count(self):
+    def qr_scan(self):
         sys.stdout = QTextEditLogger(self.cnt_output)
-        qr = qrtest.QrTest()
-        qr.run()
-        lc = layer_cnt.LayerCnt()
-        lc.run()
+        self.qr_scan_thread = QrScanThread(self.qr_read)
+        self.qr_scan_thread.start()
+        self.qr_scan_thread.wait()
+        self.layer_cnt_thread = LayerCntThread(self.layer_cnt)
+        self.layer_cnt_thread.start()
+        self.layer_cnt_thread.wait()
         sys.stdout = QTextEditLogger(self.log_output)
 
     # 当窗口大小改变时调整按钮字体大小

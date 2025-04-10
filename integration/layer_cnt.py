@@ -10,7 +10,13 @@ class LayerCnt():
     def read_yolo_results(self, file_path):
         with open(file_path, 'r') as file:
             data = file.readlines()
-        return [list(map(float, line.split()[1:5])) for line in data]
+        return [list(map(float, line.split())) for line in data]
+    
+    def write_yolo_results_with_layer(self, file_path, detections, layers):
+        with open(file_path, 'w') as file:
+            for i, det in enumerate(detections):
+                # type cx cy x y conf layer
+                file.write(f"0 {det[1]} {det[2]} {det[3]} {det[4]} {det[5]} {layers[i]}\n")
     
     def run(self):
         print('hello from layer cnt')
@@ -24,13 +30,18 @@ class LayerCnt():
 
         for txt in txts:
             detections = self.read_yolo_results(txt)
-            y_centers = [det[1] for det in detections]
-            y_centers.sort(reverse=True)
+            detections.sort(key=lambda x: x[2], reverse=True)
+            y_centers = [det[2] for det in detections]
+            # y_centers.sort(reverse=True)
             y_centers = np.array(y_centers).reshape(-1, 1)
 
             # 使用DBSCAN进行聚类
             dbscan = DBSCAN(eps=0.05, min_samples=1).fit(y_centers)
             layers = dbscan.labels_
+
+            # 分配层数
+            layer_labels = [layers[i] for i in range(len(detections))]
+            self.write_yolo_results_with_layer(txt, detections, layer_labels)
 
             # 统计每层的箱子数量
             layer_counts = {}
@@ -44,7 +55,9 @@ class LayerCnt():
                 res += f"[{layer}: {count}] "
             
             # 输出层统计结果
-            print(f"{txt} {res}")
+            print(f"{os.path.basename(txt)} {res}")
+        
+        print("Layer Count Done!")
 
 if __name__ == "__main__":
     lc = LayerCnt()

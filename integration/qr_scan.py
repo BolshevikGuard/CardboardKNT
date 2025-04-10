@@ -4,7 +4,7 @@ from pyzbar.pyzbar import ZBarSymbol
 import os
 import json
 
-class QrTest():
+class QrScan():
     def __init__(self):
         pass
 
@@ -68,8 +68,10 @@ class QrTest():
                 image_path = os.path.join(folder_path, filename)
                 qrcodes    = self.read_qrcode(image_path, roi_cnt=roi_cnt)
                 if qrcodes:
-                    print(f"{filename} {qrcodes}")
+                    print(f"{os.path.basename(filename)} {qrcodes}")
+        
+        print("QR Scan Done!")
 
 if __name__ == "__main__":
-    qt = QrTest()
+    qt = QrScan()
     qt.run()
