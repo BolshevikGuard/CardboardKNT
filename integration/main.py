@@ -20,7 +20,7 @@ class QTextEditLogger:
     def flush(self):
         pass
 
-# 创建一个线程类来运行 centerControl
+# 创建各种线程类
 class CenterControlThread(QThread):
     def __init__(self, center_control):
         super().__init__()
