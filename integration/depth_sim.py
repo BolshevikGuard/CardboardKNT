@@ -50,7 +50,7 @@ class DepthSim():
         cmap = matplotlib.colormaps.get_cmap('Spectral_r')
         
         for k, filename in enumerate(filenames):
-            print(f'Depth Progress {k+1}/{len(filenames)}: {filename}')
+            print(f'Depth Progress {k+1}/{len(filenames)}: {os.path.basename(filename)}')
             
             raw_image = cv2.imread(filename)
             

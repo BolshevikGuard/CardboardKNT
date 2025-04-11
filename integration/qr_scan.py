@@ -6,7 +6,8 @@ import json
 
 class QrScan():
     def __init__(self):
-        pass
+        self.qr_dict = {}
+        self.qr_signal = None
 
     def read_qrcode(self, image_path, roi_cnt=1):
         # 读取图像
@@ -53,6 +54,10 @@ class QrScan():
         res = [qrcode.data.decode('utf-8') for lists in qrcodes for qrcode in lists]
         return res
 
+    def update_qrdict(self):
+        if self.qr_signal:
+            self.qr_signal.emit(self.qr_dict)
+
     def run(self):
         print('hello from qrtest')
         # return
@@ -69,7 +74,17 @@ class QrScan():
                 qrcodes    = self.read_qrcode(image_path, roi_cnt=roi_cnt)
                 if qrcodes:
                     print(f"{os.path.basename(filename)} {qrcodes}")
+                    self.qr_dict[os.path.basename(filename)] = qrcodes
+                    self.update_qrdict()
+                else:
+                    self.qr_dict[os.path.basename(filename)] = ["No Codes!"]
         
+        # self.qr_dict = {
+        #     'jia' : ['a', 'b', 'c'],
+        #     'yi' : ['d', 'e'], 
+        #     'bing' : ['f', 'g', 'h', 'i', 'j']
+        # }
+        self.update_qrdict()
         print("QR Scan Done!")
 
 if __name__ == "__main__":

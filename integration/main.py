@@ -4,9 +4,10 @@ import pred_test
 import qr_scan
 import layer_cnt
 import depth_sim
-from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QTextEdit, QHBoxLayout, QSizePolicy
-from PySide6.QtCore import QThread
-from PySide6.QtGui import QFont
+import whole_cnt
+from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QTextEdit, QHBoxLayout, QSizePolicy, QTableWidget, QTableWidgetItem, QHeaderView
+from PySide6.QtCore import QThread, Signal
+from PySide6.QtGui import QFont, QGuiApplication
 
 # 自定义日志重定向类
 class QTextEditLogger:
@@ -47,9 +48,11 @@ class DepthSimThread(QThread):
         self.depthsimer.run()
 
 class QrScanThread(QThread):
+    qr_signal = Signal(dict)
     def __init__(self, qr_scan):
         super().__init__()
         self.qrscanner = qr_scan
+        self.qrscanner.qr_signal = self.qr_signal
     def run(self):
         self.qrscanner.run()
 
@@ -60,6 +63,15 @@ class LayerCntThread(QThread):
     def run(self):
         self.layercnter.run()
 
+class WholeCntThread(QThread):
+    cnt_signal = Signal(list)
+    def __init__(self, whole_cnt):
+        super().__init__()
+        self.wholecnter = whole_cnt
+        self.wholecnter.cnt_signal = self.cnt_signal
+    def run(self):
+        self.wholecnter.run()
+
 # GUI 界面
 class MainWindow(QWidget):
     def __init__(self):
@@ -67,19 +79,22 @@ class MainWindow(QWidget):
         self.setWindowTitle("智能仓储盘点系统")
         self.init()
         self.center_control = CenterControl()
-        self.pred_test = pred_test.PredictTest()
-        self.depth_sim = depth_sim.DepthSim()
-        self.qr_read = qr_scan.QrScan()
-        self.layer_cnt = layer_cnt.LayerCnt()
-        self.setGeometry(100, 100, 1000, 600)
+        self.pred_test      = pred_test.PredictTest()
+        self.depth_sim      = depth_sim.DepthSim()
+        self.qr_read        = qr_scan.QrScan()
+        self.layer_cnt      = layer_cnt.LayerCnt()
+        self.whole_cnt      = whole_cnt.WholeCnt()
+        # self.setGeometry(100, 100, 1000, 600)
+        screen = QGuiApplication.primaryScreen().geometry()
+        self.setGeometry(0, 0, screen.width(), screen.height())
 
     def init(self):
         layout      = QHBoxLayout()
         leftlayout  = QVBoxLayout()
-        midlayout   = QVBoxLayout()
+        uplayout   = QHBoxLayout()
         rightlayout = QVBoxLayout()
 
-        # 左侧布局 包括AGV启动按钮、AGV结束按钮、读图与推理按钮
+        # 左侧布局 包括AGV启动按钮、AGV结束按钮、读图与推理按钮、QR识读与计数按钮
         self.start_button = QPushButton("启动AGV巡航", self)
         self.start_button.clicked.connect(self.start_center_control)
         self.start_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -95,29 +110,47 @@ class MainWindow(QWidget):
         self.pred_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         leftlayout.addWidget(self.pred_button)
 
-        # 中部布局 包括QR识读与计数按钮、计数结果输出框
         self.QRcnt_button = QPushButton("扫描条码\n&&\n箱体计数", self)
         self.QRcnt_button.clicked.connect(self.qr_scan)
         self.QRcnt_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        midlayout.addWidget(self.QRcnt_button)
+        leftlayout.addWidget(self.QRcnt_button)
 
-        self.cnt_output = QTextEdit(self)
-        self.cnt_output.setReadOnly(True)
-        self.cnt_output.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        midlayout.addWidget(self.cnt_output)
+        # 右上部布局 包括读码结果、分层计数结果
 
-        midlayout.setStretchFactor(self.QRcnt_button, 1)
-        midlayout.setStretchFactor(self.cnt_output, 2)
+        self.qrtable = QTableWidget(self)
+        self.qrtable.setRowCount(5)
+        self.qrtable.setColumnCount(8)
+        self.qrtable.verticalHeader().setVisible(False)
+        self.qrtable.horizontalHeader().setVisible(False)
+        self.qrtable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.qrtable.setStyleSheet('background-color: grey')
+        uplayout.addWidget(self.qrtable)
 
-        # 右侧布局 包括日志框
+        self.cnttable = QTableWidget(self)
+        self.cnttable.setRowCount(5)
+        self.cnttable.setColumnCount(2)
+        self.cnttable.verticalHeader().setVisible(False)
+        self.cnttable.horizontalHeader().setVisible(False)
+        self.cnttable.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.cnttable.setStyleSheet('background-color: grey')
+        uplayout.addWidget(self.cnttable)
+
+        uplayout.setStretchFactor(self.qrtable, 4)
+        uplayout.setStretchFactor(self.cnttable, 1)
+
+        # 右侧布局 包括右上布局和日志框
         self.log_output = QTextEdit(self)
         self.log_output.setReadOnly(True)
+        rightlayout.addLayout(uplayout)
         rightlayout.addWidget(self.log_output)
+        rightlayout.setStretchFactor(uplayout, 5)
+        rightlayout.setStretchFactor(self.log_output, 1)
 
         # 布局汇总
         layout.addLayout(leftlayout)
-        layout.addLayout(midlayout)
         layout.addLayout(rightlayout)
+        layout.setStretchFactor(leftlayout, 1)
+        layout.setStretchFactor(rightlayout, 5)
         self.setLayout(layout)
 
         # self.worker_thread = None
@@ -139,7 +172,7 @@ class MainWindow(QWidget):
             self.center_control_thread.wait()
         print('Cruise Finished!')
 
-    # 读图与推理
+    # 推理与深度估计
     def read_pred(self):
         self.pred_test_thread = PredictThread(self.pred_test)
         self.pred_test_thread.start()
@@ -149,18 +182,37 @@ class MainWindow(QWidget):
         
     # 读码与计数
     def qr_scan(self):
-        sys.stdout = QTextEditLogger(self.cnt_output)
         self.qr_scan_thread = QrScanThread(self.qr_read)
+        self.qr_scan_thread.qr_signal.connect(self.update_qrdict)
         self.qr_scan_thread.start()
         self.qr_scan_thread.wait()
+
         self.layer_cnt_thread = LayerCntThread(self.layer_cnt)
         self.layer_cnt_thread.start()
         self.layer_cnt_thread.wait()
-        sys.stdout = QTextEditLogger(self.log_output)
+
+        self.whole_cnt_thread = WholeCntThread(self.whole_cnt)
+        self.whole_cnt_thread.cnt_signal.connect(self.update_cntlist)
+        self.whole_cnt_thread.start()
+        self.whole_cnt_thread.wait()
+
+    def update_qrdict(self, qr_dict):
+        col = 0
+        for key in qr_dict.keys():
+            vals = qr_dict[key]
+            self.qrtable.setItem(0, col, QTableWidgetItem(str(key)))
+            for i in range(0, len(vals)):
+                self.qrtable.setItem(i+1, col, QTableWidgetItem(str(vals[i])))
+            col += 1
+    
+    def update_cntlist(self, cnt_list):
+        for idx, val in enumerate(cnt_list):
+            self.cnttable.setItem(idx, 0, QTableWidgetItem(f'Group {idx+1}'))
+            self.cnttable.setItem(idx, 1, QTableWidgetItem(str(val)))
 
     # 当窗口大小改变时调整按钮字体大小
     def resizeEvent(self, event):
-        new_size = max(self.width() // 50, 10)  # 防止太小
+        new_size = max(self.width() // 80, 8)  # 防止太小
         font = QFont()
         font.setPointSize(new_size)
         self.start_button.setFont(font)
