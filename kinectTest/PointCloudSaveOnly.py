@@ -11,7 +11,7 @@ import ctypes
 
 class Cloud:
 
-    def __init__(self, file="", color=False, depth=False):
+    def __init__(self, file="", color=False, depth=True):
         """
         Initializes the point cloud
         file: The dir to the point cloud (either .txt, .ply or .pcd file)
@@ -28,7 +28,6 @@ class Cloud:
         self._depth_point_cloud = depth  # Flag to show dynamic point cloud using the depth frame
         self._cloud_file = file  # Store the file name
         self._dir_path = os.path.dirname(os.path.realpath(__file__))  # Store the absolute path of the file
-        # self._start_gui = False  # Flag for stopping the main loop and exit when close
         self._dynamic_point_cloud = None  # Store the calculated point cloud points
 
         # check for multiple input flags or no input flags when using dynamic point cloud only
@@ -53,7 +52,7 @@ class Cloud:
         :return None
         """
         # Check if the file exists in the folder
-        if not os.path.exists(os.path.join(self._dir_path, self._cloud_file)):
+        if True:#not os.path.exists(os.path.join(self._dir_path, self._cloud_file)):
             t = time.time()  # starting time
             while not self._cloud:
                 # ----- Get Depth Frame
@@ -211,7 +210,7 @@ class Cloud:
                         "property uchar blue",
                         "end_header"]
         # convert to string
-        data = '\n'.join('{} {} {} {} {} {}'.format('%.2f' % x[0], '%.2f' % x[1], '%.2f' % x[2], int(x[3]), int(x[4]), int(x[5])) for x in data)
+        data = '\n'.join('{} {} {} {} {} {}'.format('%.2f' % -x[0], '%.2f' % x[1], '%.2f' % x[2], int(x[3]), int(x[4]), int(x[5])) for x in data)
         header = '\n'.join(line for line in header_lines) + '\n'
         # write file
         file = open(os.path.join(self._dir_path, self._cloud_file), 'w')
@@ -251,5 +250,5 @@ class Cloud:
 
 
 if __name__ == "__main__":
-    
-    pcl = Cloud(file='models/hello7.ply', depth=True)
+    time.sleep(5)
+    pcl = Cloud(file='models/hello2.ply', depth=True)
