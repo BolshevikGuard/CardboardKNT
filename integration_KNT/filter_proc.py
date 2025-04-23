@@ -17,7 +17,7 @@ class FilterProc():
 
     def roi_filter(self, input_file:str, output_file:str, voxel_sz:float, roi:ROIbg, nb:int, std_r:float):
         pcd = o3d.io.read_point_cloud(input_file)
-        # print(f"读取点云 {input_file} 点数 {len(pcd.points)}")
+        print(f"读取点云 {os.path.basename(input_file)} 点数 {len(pcd.points)}")
 
         # 体素下采样
         pcd = pcd.voxel_down_sample(voxel_sz)
@@ -32,10 +32,10 @@ class FilterProc():
         filtered_pcd = o3d.geometry.PointCloud()
         filtered_pcd.points = o3d.utility.Vector3dVector(filtered_pts)
         filtered_pcd.colors = o3d.utility.Vector3dVector(filtered_cls)
-        # print(f'ROI滤除后点数 {len(filtered_pcd.points)}')
+        print(f'ROI滤除后点数 {len(filtered_pcd.points)}')
 
         filtered_pcd, _ = filtered_pcd.remove_statistical_outlier(nb_neighbors=nb, std_ratio=std_r)
-        # print(f"杂点滤除点数 {len(filtered_pcd.points)}")
+        print(f"杂点滤除点数 {len(filtered_pcd.points)}")
 
         o3d.io.write_point_cloud(output_file, filtered_pcd, write_ascii=True)
         

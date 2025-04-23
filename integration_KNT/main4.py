@@ -5,13 +5,15 @@ from PySide6.QtCore import QThread, Signal, Qt
 from PySide6.QtGui import QFont, QGuiApplication, QImage, QPixmap
 import json
 import os
+from typing import Type
 
 # 自定义日志重定向类
 class QTextEditLogger:
-    def __init__(self, text_edit_widget):
+    def __init__(self, text_edit_widget:QTextEdit):
         self.widget = text_edit_widget
-    def write(self, message):
+    def write(self, message:str):
         self.widget.append(message.strip())  # 更新 GUI 日志框
+        self.widget.ensureCursorVisible()
     def flush(self):
         pass
 
@@ -25,21 +27,19 @@ class GenericThread(QThread): # 通用线程类
 
 class QrScanThread(QThread):
     qr_signal = Signal(dict)
-    def __init__(self, qr_scan, batch_num:int, image_label:QLabel):
+    def __init__(self, qr_scan:Type[qr_scan.QrScan], batch_num:int, image_label:QLabel):
         super().__init__()
         self.qrscanner           = qr_scan(batch_num, image_label)
         self.qrscanner.qr_signal = self.qr_signal
-        # self.batch_num = batch_num
     def run(self):
         self.qrscanner.run()
 
 class VolCntThread(QThread):
     cnt_signal = Signal(list)
-    def __init__(self, vol_cnt, batch_num:int):
+    def __init__(self, vol_cnt:Type[vol_cnt.VolCnt], batch_num:int):
         super().__init__()
         self.volcnter            = vol_cnt(batch_num)
         self.volcnter.cnt_signal = self.cnt_signal
-        # self.batch_num = batch_num
     def run(self):
         self.volcnter.run()
 
@@ -225,6 +225,10 @@ class MainWindow(QWidget):
         self.vol_cnt_thread.wait()
         self.next_button.setEnabled(True)
 
+        if self.batch_num_max == 1:
+            self.next_button.setEnabled(False)
+            self.former_buttom.setEnabled(False)
+
     # 下一堆垛
     def next_stack(self):
         self.batch_num = min(self.batch_num_max-1, self.batch_num+1)
@@ -238,6 +242,8 @@ class MainWindow(QWidget):
         self.vol_cnt_thread.start()
         self.vol_cnt_thread.wait()
         self.former_buttom.setEnabled(True)
+        if self.batch_num == self.batch_num_max-1:
+            self.next_button.setEnabled(False)
 
     # 上一堆垛
     def former_stack(self):
@@ -251,6 +257,9 @@ class MainWindow(QWidget):
         self.vol_cnt_thread.cnt_signal.connect(self.update_cntlist)
         self.vol_cnt_thread.start()
         self.vol_cnt_thread.wait()
+        self.next_button.setEnabled(True)
+        if self.batch_num == 0:
+            self.former_buttom.setEnabled(False)
 
     # 更新条形码/二维码信息表格
     def update_qrdict(self, qr_dict:dict):
@@ -263,7 +272,7 @@ class MainWindow(QWidget):
             col += 1
 
     # 更新计数结果表格
-    def update_cntlist(self, cnt_list):
+    def update_cntlist(self, cnt_list:list):
         for val in cnt_list:
             self.cnttable.setItem(1, 1, QTableWidgetItem(str(val)))
 

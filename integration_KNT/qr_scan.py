@@ -5,12 +5,13 @@ import os
 import json
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QLabel
 
 class QrScan():
-    def __init__(self, batch_num=0, image_label=None):
-        self.qr_dict = {}
-        self.batch_num = batch_num
-        self.qr_signal = None
+    def __init__(self, batch_num:int, image_label:QLabel):
+        self.qr_dict     = {}
+        self.batch_num   = batch_num
+        self.qr_signal   = None
         self.image_label = image_label
 
     def read_qrcode(self, image_path:str, roi_cnt=1):
@@ -70,8 +71,7 @@ class QrScan():
             config = json.load(f)
         folder_path = config['qr_src_path']
         roi_cnt     = config['roi_cnt']
-        filename = [file for file in os.listdir(folder_path) if file.endswith((".bmp", "png", "jpg", "jpeg"))][self.batch_num]
-        # filename = os.listdir(folder_path)[self.batch_num]
+        filename    = [file for file in os.listdir(folder_path) if file.endswith((".bmp", "png", "jpg", "jpeg"))][self.batch_num]
         # 遍历文件夹中的所有图片
         if True:
             image_path = os.path.join(folder_path, filename)
@@ -95,5 +95,5 @@ class QrScan():
         print("QR Scan Done!")
 
 if __name__ == "__main__":
-    qt = QrScan()
+    qt = QrScan(batch_num=0, image_label=None)
     qt.run()
