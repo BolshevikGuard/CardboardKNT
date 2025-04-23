@@ -27,5 +27,10 @@
         "x_right": 400,
         "z_down": -570,
         "z_up": 2000
+    },
+    "boxsz": {
+        "length": 540,
+        "width": 570,
+        "height": 290
     }
 }
