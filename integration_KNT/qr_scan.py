@@ -14,7 +14,7 @@ class QrScan():
         self.qr_signal   = None
         self.image_label = image_label
 
-    def read_qrcode(self, image_path:str, roi_cnt=1):
+    def read_qrcode(self, image_path:str, roi_cnt:int=1) -> list:
         # 读取图像
         image = cv2.imread(image_path)
         # 获取图像尺寸

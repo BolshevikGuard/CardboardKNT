@@ -11,6 +11,12 @@ class ROIbg:
         self.z_down  = z_down
         self.z_up    = z_up
 
+def get_batch_num_max() -> int:
+    with open('config.json', encoding='utf-8') as f:
+        config = json.load(f)
+    ply_folder = config['ply_folder']
+    return sum(1 for file in os.listdir(ply_folder) if file.endswith('png'))
+
 class FilterProc():
     def __init__(self):
         pass

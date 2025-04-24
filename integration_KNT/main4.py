@@ -209,7 +209,7 @@ class MainWindow(QWidget):
     # 读取点云 点云ROI散点滤波 第一堆垛展示
     def read_pred(self):
         self.batch_num = 0
-        self.batch_num_max = self.get_batch_num_max()
+        self.batch_num_max = filter_proc.get_batch_num_max()
         self.boxpics_title.setText(f'当前处理批次图像 {self.batch_num+1}/{self.batch_num_max}')
         self.filter_proc_thread = GenericThread(self.filter_proc)
         self.filter_proc_thread.start()
@@ -275,12 +275,6 @@ class MainWindow(QWidget):
     def update_cntlist(self, cnt_list:list):
         for val in cnt_list:
             self.cnttable.setItem(1, 1, QTableWidgetItem(str(val)))
-
-    def get_batch_num_max(self):
-        with open('config.json', encoding='utf-8') as f:
-            config = json.load(f)
-        ply_folder = config['ply_folder']
-        return sum(1 for file in os.listdir(ply_folder) if file.endswith('png'))
 
     # 窗口放缩事件函数
     def resizeEvent(self, event):

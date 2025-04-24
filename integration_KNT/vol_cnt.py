@@ -9,7 +9,7 @@ class ObjBox:
         self.length = length
         self.width  = width
         self.height = height
-    def get_vol(self):
+    def get_vol(self) -> float:
         return self.length * self.width * self.height
     
 class ROIbg:
@@ -26,7 +26,7 @@ class VolCnt():
         self.cnt_signal = None
         self.batch_num  = batch_num
     
-    def compute_integrated_volume(self, input_file:str, reference:float):
+    def compute_integrated_volume(self, input_file:str, reference:float) -> float:
         # 读取点云文件
         pcd = o3d.io.read_point_cloud(input_file)
         # 提取点云的XYZ坐标
