@@ -3,8 +3,6 @@ import centerControl, qr_scan, filter_proc, vol_cnt
 from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QTextEdit, QHBoxLayout, QSizePolicy, QTableWidget, QTableWidgetItem, QHeaderView, QLabel
 from PySide6.QtCore import QThread, Signal, Qt
 from PySide6.QtGui import QFont, QGuiApplication, QImage, QPixmap
-import json
-import os
 from typing import Type
 
 # 自定义日志重定向类

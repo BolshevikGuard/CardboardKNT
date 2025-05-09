@@ -69,7 +69,10 @@ class VolCnt():
         cnt        = volume/real_vol
         self.cnt_list.append(round(cnt))
         self.update_cntlist()
-        print(f'{os.path.basename(input_file)} // real_cnt={cnt:.3f}')
+        # print(f'{os.path.basename(input_file)} // real_cnt={cnt:.3f}')
+        print(f'{os.path.basename(input_file)}')
+        print(f'{volume=} mm3')
+        print(f'Count={cnt:.3f}')
         print('Count Done!')
 
 if __name__ == "__main__":
